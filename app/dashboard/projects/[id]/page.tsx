@@ -6,6 +6,7 @@ import { useAuthStore } from '../../../store/auth'
 import CreateCategoryModal from '../../../components/dashboard/CreateCategoryModal'
 import CreateTranslationKeyModal from '../../../components/dashboard/CreateTranslationKeyModal'
 import UpdateTranslationKeyModal from '../../../components/dashboard/UpdateTranslationKeyModal'
+import ExportModal from '../../../components/dashboard/ExportModal'
 import CategoryList from '../../../components/dashboard/CategoryList'
 
 interface Project {
@@ -45,6 +46,7 @@ export default function ProjectDetailPage() {
   const [showCreateCategory, setShowCreateCategory] = useState(false)
   const [showCreateKey, setShowCreateKey] = useState(false)
   const [showUpdateKey, setShowUpdateKey] = useState(false)
+  const [showExportModal, setShowExportModal] = useState(false)
   const [selectedKey, setSelectedKey] = useState<TranslationKey | null>(null)
   const [error, setError] = useState('')
   
@@ -337,6 +339,18 @@ export default function ProjectDetailPage() {
               >
                 Add Key
               </button>
+              <button
+                onClick={() => setShowExportModal(true)}
+                className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
+              >
+                Export
+              </button>
+              <button
+                onClick={() => router.push('/documentation')}
+                className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+              >
+                Documentation
+              </button>
             </div>
           </div>
 
@@ -378,6 +392,16 @@ export default function ProjectDetailPage() {
           categories={categories}
           project={project}
           translationKey={selectedKey}
+        />
+      )}
+
+      {showExportModal && project && (
+        <ExportModal
+          isOpen={showExportModal}
+          onClose={() => setShowExportModal(false)}
+          projectId={projectId}
+          projectName={project.name}
+          languages={project.languages}
         />
       )}
     </div>

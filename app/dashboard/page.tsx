@@ -139,6 +139,12 @@ export default function DashboardPage() {
               <h1 className="text-xl font-semibold text-gray-900">LangDefine</h1>
             </div>
             <div className="flex items-center space-x-4">
+              <button
+                onClick={() => router.push('/documentation')}
+                className="text-sm text-gray-500 hover:text-gray-700"
+              >
+                Documentation
+              </button>
               <span className="text-sm text-gray-700">Welcome, {user?.name}</span>
               <button
                 onClick={handleLogout}

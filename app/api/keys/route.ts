@@ -133,26 +133,8 @@ export async function POST(request: NextRequest) {
             let translatedValue = value
 
             if (valueType === 'text') {
-              // Simple text translation
-              const prompt = `Translate the following English text to ${language}. 
-              ${description ? `Context: ${description}` : ''}
-              Text: "${value}"
-              
-              Respond with only the translation, nothing else.`
-
-              try {
-                const completion = await openai.chat.completions.create({
-                  model: 'gpt-4o-mini',
-                  messages: [{ role: 'user', content: prompt }],
-                  max_tokens: 150,
-                  temperature: 0.3,
-                })
-
-                translatedValue = completion.choices[0]?.message?.content?.trim() || value
-              } catch (error) {
-                console.error(`Translation error for ${language}:`, error)
-                translatedValue = value // Use original value if translation fails
-              }
+              // Simple text translation using the new translateText function
+              translatedValue = await translateText(value, language, description)
             } else if (valueType === 'object') {
               // Object translation - translate all string values
               const translatedObject = await translateObject(value, language, description)
@@ -277,26 +259,8 @@ export async function PUT(request: NextRequest) {
             let translatedValue = value
 
             if (valueType === 'text') {
-              // Simple text translation
-              const prompt = `Translate the following English text to ${language}. 
-              ${description ? `Context: ${description}` : ''}
-              Text: "${value}"
-              
-              Respond with only the translation, nothing else.`
-
-              try {
-                const completion = await openai.chat.completions.create({
-                  model: 'gpt-4o-mini',
-                  messages: [{ role: 'user', content: prompt }],
-                  max_tokens: 150,
-                  temperature: 0.3,
-                })
-
-                translatedValue = completion.choices[0]?.message?.content?.trim() || value
-              } catch (error) {
-                console.error(`Translation error for ${language}:`, error)
-                translatedValue = value // Use original value if translation fails
-              }
+              // Simple text translation using the new translateText function
+              translatedValue = await translateText(value, language, description)
             } else if (valueType === 'object') {
               // Object translation - translate all string values
               const translatedObject = await translateObject(value, language, description)
@@ -360,32 +324,86 @@ export async function PUT(request: NextRequest) {
   }
 }
 
+// Helper function to clean AI response
+function cleanAIResponse(response: string): string {
+  // Remove surrounding quotes if they exist
+  let cleaned = response.trim()
+  
+  // Remove quotes from beginning and end
+  if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || 
+      (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
+    cleaned = cleaned.slice(1, -1)
+  }
+  
+  // Remove any extra whitespace
+  cleaned = cleaned.trim()
+  
+  return cleaned
+}
+
+// Helper function to translate text using AI with function calling
+async function translateText(text: string, targetLanguage: string, context?: string): Promise<string> {
+  try {
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a professional translator. Translate the given text to ${targetLanguage}. 
+          Return only the translation without any quotes, punctuation marks, or extra formatting.
+          If context is provided, consider it for better translation accuracy.`
+        },
+        {
+          role: 'user',
+          content: `Translate this text to ${targetLanguage}:
+          ${context ? `Context: ${context}` : ''}
+          Text: ${text}`
+        }
+      ],
+      functions: [
+        {
+          name: 'translate_text',
+          description: 'Translate text to the specified language',
+          parameters: {
+            type: 'object',
+            properties: {
+              translation: {
+                type: 'string',
+                description: 'The translated text without any quotes or extra formatting'
+              }
+            },
+            required: ['translation']
+          }
+        }
+      ],
+      function_call: { name: 'translate_text' },
+      max_tokens: 150,
+      temperature: 0.3,
+    })
+
+    const functionCall = completion.choices[0]?.message?.function_call
+    if (functionCall && functionCall.name === 'translate_text') {
+      const args = JSON.parse(functionCall.arguments)
+      return cleanAIResponse(args.translation)
+    }
+
+    // Fallback to regular response if function call fails
+    const response = completion.choices[0]?.message?.content
+    return response ? cleanAIResponse(response) : text
+  } catch (error) {
+    console.error(`Translation error:`, error)
+    return text // Return original text if translation fails
+  }
+}
+
 // Helper function to translate object values
 async function translateObject(obj: any, targetLanguage: string, context?: string): Promise<any> {
   const translatedObj = { ...obj }
   
   for (const [key, value] of Object.entries(obj)) {
     if (typeof value === 'string') {
-      const prompt = `Translate the following English text to ${targetLanguage}. 
-      ${context ? `Context: ${context}` : ''}
-      Text: "${value}"
-      
-      Respond with only the translation, nothing else.`
-
-      try {
-        const completion = await openai.chat.completions.create({
-          model: 'gpt-4o-mini',
-          messages: [{ role: 'user', content: prompt }],
-          max_tokens: 150,
-          temperature: 0.3,
-        })
-
-        translatedObj[key] = completion.choices[0]?.message?.content?.trim() || value
-      } catch (error) {
-        console.error(`Translation error for key "${key}":`, error)
-        // Keep original value if translation fails
-        translatedObj[key] = value
-      }
+      const translatedValue = await translateText(value, targetLanguage, context)
+      translatedObj[key] = translatedValue
     }
   }
   
@@ -399,26 +417,8 @@ async function translateArray(arr: any[], targetLanguage: string, context?: stri
   for (const item of arr) {
     if (typeof item === 'string') {
       // Translate string items
-      const prompt = `Translate the following English text to ${targetLanguage}. 
-      ${context ? `Context: ${context}` : ''}
-      Text: "${item}"
-      
-      Respond with only the translation, nothing else.`
-
-      try {
-        const completion = await openai.chat.completions.create({
-          model: 'gpt-4o-mini',
-          messages: [{ role: 'user', content: prompt }],
-          max_tokens: 150,
-          temperature: 0.3,
-        })
-
-        translatedArray.push(completion.choices[0]?.message?.content?.trim() || item)
-      } catch (error) {
-        console.error(`Translation error for array item:`, error)
-        // Keep original value if translation fails
-        translatedArray.push(item)
-      }
+      const translatedValue = await translateText(item, targetLanguage, context)
+      translatedArray.push(translatedValue)
     } else if (typeof item === 'object' && item !== null) {
       // Translate object items
       try {
