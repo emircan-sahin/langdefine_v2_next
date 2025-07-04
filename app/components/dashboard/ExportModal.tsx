@@ -2,6 +2,12 @@
 
 import { useState } from 'react'
 import { useAuthStore } from '../../store/auth'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Download, FileText, FolderOpen } from 'lucide-react'
 
 interface ExportModalProps {
   isOpen: boolean
@@ -18,8 +24,6 @@ export default function ExportModal({ isOpen, onClose, projectId, projectName, l
   const [error, setError] = useState('')
   
   const { token } = useAuthStore()
-
-  if (!isOpen) return null
 
   const handleExport = async () => {
     setIsExporting(true)
@@ -81,88 +85,69 @@ export default function ExportModal({ isOpen, onClose, projectId, projectName, l
   }
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <div className="mt-3">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium text-gray-900">
-              Export Translations
-            </h3>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center">
+            <Download className="mr-2 h-5 w-5" />
+            Export Translations
+          </DialogTitle>
+          <DialogDescription>
+            Export your translation keys in JSON format
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="space-y-6">
+          <div className="space-y-3">
+            <Label>Export Type</Label>
+            <RadioGroup value={exportType} onValueChange={setExportType}>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="single" id="single" />
+                <Label htmlFor="single" className="flex items-center space-x-2 cursor-pointer">
+                  <FileText className="h-4 w-4" />
+                  <div>
+                    <div className="font-medium">Single File</div>
+                    <div className="text-xs text-muted-foreground">
+                      All languages in one JSON file
+                    </div>
+                  </div>
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="multi" id="multi" />
+                <Label htmlFor="multi" className="flex items-center space-x-2 cursor-pointer">
+                  <FolderOpen className="h-4 w-4" />
+                  <div>
+                    <div className="font-medium">Multi-File</div>
+                    <div className="text-xs text-muted-foreground">
+                      Separate file for each language
+                    </div>
+                  </div>
+                </Label>
+              </div>
+            </RadioGroup>
           </div>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Export Type
-            </label>
-            <div className="space-y-2">
-              <label className="flex items-start space-x-3 cursor-pointer">
-                <input
-                  type="radio"
-                  name="exportType"
-                  value="single"
-                  checked={exportType === 'single'}
-                  onChange={(e) => setExportType(e.target.value)}
-                  className="mt-1"
-                />
-                <div>
-                  <div className="text-sm font-medium text-gray-900">
-                    Single File
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    All languages in one JSON file
-                  </div>
-                </div>
-              </label>
-              <label className="flex items-start space-x-3 cursor-pointer">
-                <input
-                  type="radio"
-                  name="exportType"
-                  value="multi"
-                  checked={exportType === 'multi'}
-                  onChange={(e) => setExportType(e.target.value)}
-                  className="mt-1"
-                />
-                <div>
-                  <div className="text-sm font-medium text-gray-900">
-                    Multi-File
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    Separate file for each language (en.json, tr.json, etc.)
-                  </div>
-                </div>
-              </label>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="language">Language</Label>
+            <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select language" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Languages</SelectItem>
+                {languages.map((lang) => (
+                  <SelectItem key={lang} value={lang}>
+                    {lang.toUpperCase()}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Language
-            </label>
-            <select
-              value={selectedLanguage}
-              onChange={(e) => setSelectedLanguage(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="all">All Languages</option>
-              {languages.map((lang) => (
-                <option key={lang} value={lang}>
-                  {lang.toUpperCase()}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="mb-4 text-sm text-gray-600">
+          <div className="text-sm text-muted-foreground space-y-1">
             <p>Export format: <strong>JSON</strong></p>
-            <p className="text-xs mt-1">
+            <p className="text-xs">
               {exportType === 'single' 
                 ? 'Compatible with React, Next.js, and other JavaScript frameworks'
                 : 'Each language will be in its own file (en.json, tr.json, etc.)'
@@ -171,28 +156,25 @@ export default function ExportModal({ isOpen, onClose, projectId, projectName, l
           </div>
 
           {error && (
-            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-md text-sm">
               {error}
             </div>
           )}
-
-          <div className="flex justify-end space-x-3">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleExport}
-              disabled={isExporting}
-              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isExporting ? 'Exporting...' : 'Export'}
-            </button>
-          </div>
         </div>
-      </div>
-    </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleExport}
+            disabled={isExporting}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            {isExporting ? 'Exporting...' : 'Export'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 } 

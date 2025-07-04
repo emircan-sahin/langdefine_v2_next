@@ -3,8 +3,23 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '../store/auth'
+import { DashboardLayout } from '../components/ui/dashboard-layout'
+import { PageHeader } from '../components/ui/page-header'
+import { StatsCard } from '../components/ui/stats-card'
+import { Button } from '../components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
+import { useToast } from '../components/ui/use-toast'
 import CreateProjectModal from '../components/dashboard/CreateProjectModal'
 import ProjectCard from '../components/dashboard/ProjectCard'
+import { 
+  Plus, 
+  FolderOpen, 
+  Globe, 
+  Languages,
+  TrendingUp,
+  Users,
+  Activity
+} from 'lucide-react'
 
 interface Project {
   _id: string
@@ -23,9 +38,9 @@ export default function DashboardPage() {
   
   const router = useRouter()
   const { user, token, isAuthenticated, isLoading: authLoading, logout } = useAuthStore()
+  const { toast } = useToast()
 
   useEffect(() => {
-    // Wait for auth store to finish loading before checking authentication
     if (authLoading) return
 
     if (!isAuthenticated) {
@@ -57,6 +72,11 @@ export default function DashboardPage() {
       setProjects(data.projects)
     } catch (err) {
       setError('Failed to load projects')
+      toast({
+        title: 'Error',
+        description: 'Failed to load projects',
+        variant: 'destructive',
+      })
     } finally {
       setIsLoading(false)
     }
@@ -84,8 +104,17 @@ export default function DashboardPage() {
 
       await fetchProjects()
       setShowCreateModal(false)
+      toast({
+        title: 'Success',
+        description: 'Project created successfully',
+        variant: 'success',
+      })
     } catch (err) {
-      setError('Failed to create project')
+      toast({
+        title: 'Error',
+        description: 'Failed to create project',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -103,8 +132,17 @@ export default function DashboardPage() {
       }
 
       await fetchProjects()
+      toast({
+        title: 'Success',
+        description: 'Project deleted successfully',
+        variant: 'success',
+      })
     } catch (err) {
-      setError('Failed to delete project')
+      toast({
+        title: 'Error',
+        description: 'Failed to delete project',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -113,109 +151,206 @@ export default function DashboardPage() {
     router.push('/login')
   }
 
-  // Show loading state while auth is loading
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
         </div>
       </div>
     )
   }
 
-  // Don't render anything if not authenticated (will redirect)
   if (!isAuthenticated) {
     return null
   }
 
+  const totalLanguages = projects.reduce((acc, project) => {
+    return acc + project.languages.length
+  }, 0)
+
+  const recentProjects = projects.slice(0, 3)
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-semibold text-gray-900">LangDefine</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push('/documentation')}
-                className="text-sm text-gray-500 hover:text-gray-700"
-              >
-                Documentation
-              </button>
-              <span className="text-sm text-gray-700">Welcome, {user?.name}</span>
-              <button
-                onClick={handleLogout}
-                className="text-sm text-gray-500 hover:text-gray-700"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+    <DashboardLayout onLogout={handleLogout}>
+      <PageHeader
+        title="Dashboard"
+        description="Welcome back! Here's an overview of your translation projects."
+      >
+        <Button onClick={() => setShowCreateModal(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Create Project
+        </Button>
+      </PageHeader>
 
-      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Your Projects</h2>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
-            >
-              Create Project
-            </button>
-          </div>
-
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-              {error}
-            </div>
-          )}
-
-          {isLoading ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-              <p className="mt-2 text-gray-600">Loading projects...</p>
-            </div>
-          ) : projects.length === 0 ? (
-            <div className="text-center py-12">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No projects yet
-              </h3>
-              <p className="text-gray-600 mb-4">
-                Create your first project to get started with translations.
-              </p>
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700"
-              >
-                Create Your First Project
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {projects.map((project) => (
-                <ProjectCard 
-                  key={project._id} 
-                  project={project}
-                  onProjectClick={() => router.push(`/dashboard/projects/${project._id}`)}
-                  onDeleteProject={handleDeleteProject}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+      {/* Stats Grid */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+        <StatsCard
+          title="Total Projects"
+          value={projects.length}
+          description="Active translation projects"
+          icon={FolderOpen}
+          trend={{ value: 12, isPositive: true }}
+        />
+        <StatsCard
+          title="Total Languages"
+          value={totalLanguages}
+          description="Languages across all projects"
+          icon={Languages}
+          trend={{ value: 8, isPositive: true }}
+        />
+        <StatsCard
+          title="Translation Keys"
+          value="1,234"
+          description="Total translation keys"
+          icon={Globe}
+          trend={{ value: 15, isPositive: true }}
+        />
+        <StatsCard
+          title="Team Members"
+          value="5"
+          description="Active team members"
+          icon={Users}
+          trend={{ value: 2, isPositive: true }}
+        />
       </div>
 
-      {showCreateModal && (
-        <CreateProjectModal
-          onClose={() => setShowCreateModal(false)}
-          onSubmit={handleCreateProject}
-        />
-      )}
-    </div>
+      {/* Recent Activity */}
+      <div className="grid gap-6 lg:grid-cols-3 mb-8">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Activity className="mr-2 h-5 w-5" />
+              Recent Activity
+            </CardTitle>
+            <CardDescription>
+              Latest updates from your translation projects
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {recentProjects.length > 0 ? (
+                recentProjects.map((project) => (
+                  <div key={project._id} className="flex items-center space-x-4 p-3 rounded-lg bg-muted/50">
+                    <div className="flex-shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Globe className="h-4 w-4 text-primary" />
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground">
+                        {project.name}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Updated {new Date(project.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex-shrink-0">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                        {project.languages.length} languages
+                      </span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <Globe className="mx-auto h-12 w-12 text-muted-foreground" />
+                  <h3 className="mt-2 text-sm font-medium text-foreground">No recent activity</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Create your first project to see activity here.
+                  </p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <TrendingUp className="mr-2 h-5 w-5" />
+              Quick Actions
+            </CardTitle>
+            <CardDescription>
+              Common tasks and shortcuts
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Button variant="outline" className="w-full justify-start">
+              <Plus className="mr-2 h-4 w-4" />
+              New Project
+            </Button>
+            <Button variant="outline" className="w-full justify-start">
+              <Globe className="mr-2 h-4 w-4" />
+              Import Translations
+            </Button>
+            <Button variant="outline" className="w-full justify-start">
+              <Languages className="mr-2 h-4 w-4" />
+              Export Project
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Projects Section */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold tracking-tight">Your Projects</h2>
+          <Button variant="outline" onClick={() => router.push('/dashboard/projects')}>
+            View All
+          </Button>
+        </div>
+
+        {error && (
+          <Card className="border-destructive">
+            <CardContent className="pt-6">
+              <p className="text-destructive">{error}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {isLoading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-2 text-muted-foreground">Loading projects...</p>
+          </div>
+        ) : projects.length === 0 ? (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center py-12">
+                <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground" />
+                <h3 className="mt-2 text-sm font-medium text-foreground">No projects yet</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Create your first project to get started with translations.
+                </p>
+                <div className="mt-6">
+                  <Button onClick={() => setShowCreateModal(true)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create Your First Project
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {projects.slice(0, 6).map((project) => (
+              <ProjectCard
+                key={project._id}
+                project={project}
+                onDelete={handleDeleteProject}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <CreateProjectModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSubmit={handleCreateProject}
+      />
+    </DashboardLayout>
   )
 } 

@@ -1,8 +1,15 @@
 'use client'
 
 import { useState } from 'react'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
+import { X, Plus } from 'lucide-react'
 
 interface CreateProjectModalProps {
+  isOpen: boolean
   onClose: () => void
   onSubmit: (projectData: {
     name: string
@@ -12,7 +19,7 @@ interface CreateProjectModalProps {
   }) => void
 }
 
-export default function CreateProjectModal({ onClose, onSubmit }: CreateProjectModalProps) {
+export default function CreateProjectModal({ isOpen, onClose, onSubmit }: CreateProjectModalProps) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [mainLanguage, setMainLanguage] = useState('')
@@ -31,6 +38,12 @@ export default function CreateProjectModal({ onClose, onSubmit }: CreateProjectM
         mainLanguage,
         languages: [mainLanguage, ...languages.filter(lang => lang !== mainLanguage)],
       })
+      // Reset form
+      setName('')
+      setDescription('')
+      setMainLanguage('')
+      setLanguages([])
+      setNewLanguage('')
     } finally {
       setIsLoading(false)
     }
@@ -47,114 +60,117 @@ export default function CreateProjectModal({ onClose, onSubmit }: CreateProjectM
     setLanguages(languages.filter(lang => lang !== language))
   }
 
+  const handleClose = () => {
+    // Reset form when closing
+    setName('')
+    setDescription('')
+    setMainLanguage('')
+    setLanguages([])
+    setNewLanguage('')
+    onClose()
+  }
+
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <div className="mt-3">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Create New Project</h3>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                Project Name
-              </label>
-              <input
-                type="text"
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                required
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Create New Project</DialogTitle>
+          <DialogDescription>
+            Create a new translation project. Add a name, description, and the languages you want to support.
+          </DialogDescription>
+        </DialogHeader>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Project Name</Label>
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter project name"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              placeholder="Enter project description"
+              rows={3}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="mainLanguage">Main Language</Label>
+            <Input
+              id="mainLanguage"
+              value={mainLanguage}
+              onChange={(e) => setMainLanguage(e.target.value)}
+              placeholder="e.g., en, es, fr"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Additional Languages</Label>
+            <div className="flex space-x-2">
+              <Input
+                value={newLanguage}
+                onChange={(e) => setNewLanguage(e.target.value)}
+                placeholder="e.g., es, fr"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    addLanguage()
+                  }
+                }}
               />
-            </div>
-
-            <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                Description
-              </label>
-              <textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                rows={3}
-              />
-            </div>
-
-            <div>
-              <label htmlFor="mainLanguage" className="block text-sm font-medium text-gray-700">
-                Main Language
-              </label>
-              <input
-                type="text"
-                id="mainLanguage"
-                value={mainLanguage}
-                onChange={(e) => setMainLanguage(e.target.value)}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="e.g., en, es, fr"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Additional Languages
-              </label>
-              <div className="flex space-x-2">
-                <input
-                  type="text"
-                  value={newLanguage}
-                  onChange={(e) => setNewLanguage(e.target.value)}
-                  className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="e.g., es, fr"
-                />
-                <button
-                  type="button"
-                  onClick={addLanguage}
-                  className="px-3 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-                >
-                  Add
-                </button>
-              </div>
-              {languages.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {languages.map((language) => (
-                    <span
-                      key={language}
-                      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"
-                    >
-                      {language}
-                      <button
-                        type="button"
-                        onClick={() => removeLanguage(language)}
-                        className="ml-1 text-indigo-600 hover:text-indigo-800"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="flex justify-end space-x-3 pt-4">
-              <button
+              <Button
                 type="button"
-                onClick={onClose}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+                variant="outline"
+                size="icon"
+                onClick={addLanguage}
+                disabled={!newLanguage}
               >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isLoading || !name || !mainLanguage}
-                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50"
-              >
-                {isLoading ? 'Creating...' : 'Create Project'}
-              </button>
+                <Plus className="h-4 w-4" />
+              </Button>
             </div>
-          </form>
-        </div>
-      </div>
-    </div>
+            
+            {languages.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {languages.map((language) => (
+                  <Badge key={language} variant="secondary" className="flex items-center gap-1">
+                    {language}
+                    <button
+                      type="button"
+                      onClick={() => removeLanguage(language)}
+                      className="ml-1 hover:text-destructive transition-colors"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={handleClose}>
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={isLoading || !name || !mainLanguage}
+            >
+              {isLoading ? 'Creating...' : 'Create Project'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 } 

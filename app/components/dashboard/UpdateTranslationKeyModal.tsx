@@ -1,6 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { Key, Plus, Trash2, Edit } from 'lucide-react'
 
 interface Category {
   _id: string
@@ -44,6 +51,7 @@ interface TranslationKey {
 }
 
 interface UpdateTranslationKeyModalProps {
+  isOpen: boolean
   onClose: () => void
   onSubmit: (keyData: {
     keyId: string
@@ -58,7 +66,7 @@ interface UpdateTranslationKeyModalProps {
   translationKey: TranslationKey
 }
 
-export default function UpdateTranslationKeyModal({ onClose, onSubmit, categories, project, translationKey }: UpdateTranslationKeyModalProps) {
+export default function UpdateTranslationKeyModal({ isOpen, onClose, onSubmit, categories, project, translationKey }: UpdateTranslationKeyModalProps) {
   const [prop, setProp] = useState(translationKey.key)
   const [description, setDescription] = useState(translationKey.description)
   const [valueType, setValueType] = useState<ValueType>(translationKey.valueType)
@@ -151,7 +159,6 @@ export default function UpdateTranslationKeyModal({ onClose, onSubmit, categorie
           setValidationError('At least one key-value pair is required')
           return false
         }
-        // Check for duplicate keys
         const keys = objectPairs.map(pair => pair.key.trim()).filter(key => key !== '')
         const uniqueKeys = new Set(keys)
         if (keys.length !== uniqueKeys.size) {
@@ -197,6 +204,10 @@ export default function UpdateTranslationKeyModal({ onClose, onSubmit, categorie
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleClose = () => {
+    onClose()
   }
 
   const addObjectPair = () => {
@@ -250,10 +261,8 @@ export default function UpdateTranslationKeyModal({ onClose, onSubmit, categorie
   const removeObjectPairFromArrayItem = (itemIndex: number, pairIndex: number) => {
     const newItems = [...arrayItems]
     const currentPairs = newItems[itemIndex].value as KeyValuePair[]
-    if (currentPairs.length > 1) {
-      newItems[itemIndex].value = currentPairs.filter((_, i) => i !== pairIndex)
-      setArrayItems(newItems)
-    }
+    newItems[itemIndex].value = currentPairs.filter((_, i) => i !== pairIndex)
+    setArrayItems(newItems)
   }
 
   const updateObjectPairInArrayItem = (itemIndex: number, pairIndex: number, field: 'key' | 'value', value: string) => {
@@ -267,71 +276,63 @@ export default function UpdateTranslationKeyModal({ onClose, onSubmit, categorie
     switch (valueType) {
       case 'text':
         return (
-          <div>
-            <label htmlFor="textValue" className="block text-sm font-medium text-gray-700">
-              Text Value (English) *
-            </label>
-            <textarea
+          <div className="space-y-2">
+            <Label htmlFor="textValue">Text Value (English) *</Label>
+            <Textarea
               id="textValue"
               value={textValue}
               onChange={(e) => setTextValue(e.target.value)}
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              rows={4}
               placeholder="Enter the English text that will be translated to other languages..."
-              required
+              rows={4}
             />
           </div>
         )
       
       case 'object':
         return (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Object Properties (English) *
-            </label>
+          <div className="space-y-3">
+            <Label>Object Properties (English) *</Label>
             <div className="space-y-3">
               {objectPairs.map((pair, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <input
+                  <Input
                     type="text"
                     value={pair.key}
                     onChange={(e) => updateObjectPair(index, 'key', e.target.value)}
-                    className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                     placeholder="Property name"
                   />
-                  <span className="text-gray-500">:</span>
-                  <input
+                  <span className="text-muted-foreground">:</span>
+                  <Input
                     type="text"
                     value={pair.value}
                     onChange={(e) => updateObjectPair(index, 'value', e.target.value)}
-                    className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                     placeholder="Property value"
                   />
                   {objectPairs.length > 1 && (
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="sm"
                       onClick={() => removeObjectPair(index)}
-                      className="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-50 transition-colors"
+                      className="text-destructive hover:text-destructive"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   )}
                 </div>
               ))}
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={addObjectPair}
-                className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                className="w-fit"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
+                <Plus className="mr-2 h-4 w-4" />
                 Add Property
-              </button>
+              </Button>
             </div>
-            <p className="mt-2 text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               Each property value will be translated to other languages.
             </p>
           </div>
@@ -339,118 +340,107 @@ export default function UpdateTranslationKeyModal({ onClose, onSubmit, categorie
       
       case 'array':
         return (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Array Items (English) *
-            </label>
+          <div className="space-y-3">
+            <Label>Array Items (English) *</Label>
             <div className="space-y-4">
               {arrayItems.map((item, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg p-4">
+                <div key={index} className="border border-border rounded-lg p-4">
                   <div className="flex items-center gap-3 mb-3">
-                    <span className="text-gray-500 text-sm">[{index}]</span>
+                    <span className="text-muted-foreground text-sm">[{index}]</span>
                     <div className="flex items-center gap-2">
-                      <button
+                      <Button
                         type="button"
+                        variant={item.type === 'string' ? 'default' : 'outline'}
+                        size="sm"
                         onClick={() => updateArrayItemType(index, 'string')}
-                        className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                          item.type === 'string'
-                            ? 'bg-blue-100 text-blue-700 border border-blue-200'
-                            : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
-                        }`}
                       >
                         String
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
+                        variant={item.type === 'object' ? 'default' : 'outline'}
+                        size="sm"
                         onClick={() => updateArrayItemType(index, 'object')}
-                        className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                          item.type === 'object'
-                            ? 'bg-purple-100 text-purple-700 border border-purple-200'
-                            : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
-                        }`}
                       >
                         Object
-                      </button>
+                      </Button>
                     </div>
                     {arrayItems.length > 1 && (
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="sm"
                         onClick={() => removeArrayItem(index)}
-                        className="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-50 transition-colors ml-auto"
+                        className="text-destructive hover:text-destructive ml-auto"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     )}
                   </div>
 
                   {item.type === 'string' ? (
-                    <input
+                    <Input
                       type="text"
                       value={item.value as string}
                       onChange={(e) => updateArrayItem(index, e.target.value)}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                       placeholder="Array item value"
                     />
                   ) : (
                     <div className="space-y-3">
                       {(item.value as KeyValuePair[]).map((pair, pairIndex) => (
                         <div key={pairIndex} className="flex items-center gap-2">
-                          <input
+                          <Input
                             type="text"
                             value={pair.key}
                             onChange={(e) => updateObjectPairInArrayItem(index, pairIndex, 'key', e.target.value)}
-                            className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                             placeholder="Property name"
                           />
-                          <span className="text-gray-500">:</span>
-                          <input
+                          <span className="text-muted-foreground">:</span>
+                          <Input
                             type="text"
                             value={pair.value}
                             onChange={(e) => updateObjectPairInArrayItem(index, pairIndex, 'value', e.target.value)}
-                            className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                             placeholder="Property value"
                           />
                           {(item.value as KeyValuePair[]).length > 1 && (
-                            <button
+                            <Button
                               type="button"
+                              variant="ghost"
+                              size="sm"
                               onClick={() => removeObjectPairFromArrayItem(index, pairIndex)}
-                              className="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-50 transition-colors"
+                              className="text-destructive hover:text-destructive"
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                            </button>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           )}
                         </div>
                       ))}
-                      <button
+                      <Button
                         type="button"
+                        variant="outline"
+                        size="sm"
                         onClick={() => addObjectPairToArrayItem(index)}
-                        className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                        className="w-fit"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
+                        <Plus className="mr-2 h-4 w-4" />
                         Add Property
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </div>
               ))}
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={addArrayItem}
-                className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                className="w-fit"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
+                <Plus className="mr-2 h-4 w-4" />
                 Add Item
-              </button>
+              </Button>
             </div>
-            <p className="mt-2 text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               Each array item can be a string or object. All string values will be translated.
             </p>
           </div>
@@ -459,157 +449,95 @@ export default function UpdateTranslationKeyModal({ onClose, onSubmit, categorie
   }
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-10 mx-auto p-5 border w-full max-w-3xl shadow-lg rounded-md bg-white">
-        <div className="mt-3">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Update Translation Key</h3>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="prop" className="block text-sm font-medium text-gray-700">
-                  Prop *
-                </label>
-                <input
-                  type="text"
-                  id="prop"
-                  value={prop}
-                  onChange={(e) => setProp(e.target.value)}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="e.g., welcome_message"
-                  required
-                />
-              </div>
-
-              <div>
-                <label htmlFor="category" className="block text-sm font-medium text-gray-700">
-                  Category *
-                </label>
-                <select
-                  id="category"
-                  value={categoryId}
-                  onChange={(e) => setCategoryId(e.target.value)}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  required
-                >
-                  <option value="">Select a category</option>
-                  {categories.map((category) => (
-                    <option key={category._id} value={category._id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                Description (Optional)
-              </label>
-              <textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                rows={3}
-                placeholder="Provide context for better AI translation..."
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center">
+            <Edit className="mr-2 h-5 w-5" />
+            Update Translation Key
+          </DialogTitle>
+          <DialogDescription>
+            Update the translation key for your project
+          </DialogDescription>
+        </DialogHeader>
+        
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="prop">Key Name *</Label>
+              <Input
+                id="prop"
+                value={prop}
+                onChange={(e) => setProp(e.target.value)}
+                placeholder="Enter key name"
+                required
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Value Type *
-              </label>
-              <div className="grid grid-cols-3 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setValueType('text')}
-                  className={`p-3 border rounded-lg text-sm font-medium transition-colors ${
-                    valueType === 'text'
-                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                      : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center justify-center mb-1">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
-                    </svg>
-                  </div>
-                  Text
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setValueType('object')}
-                  className={`p-3 border rounded-lg text-sm font-medium transition-colors ${
-                    valueType === 'object'
-                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                      : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center justify-center mb-1">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                    </svg>
-                  </div>
-                  Object
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setValueType('array')}
-                  className={`p-3 border rounded-lg text-sm font-medium transition-colors ${
-                    valueType === 'array'
-                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                      : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center justify-center mb-1">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                    </svg>
-                  </div>
-                  Array
-                </button>
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="category">Category *</Label>
+              <Select value={categoryId} onValueChange={setCategoryId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category._id} value={category._id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+          </div>
 
-            {renderValueInput()}
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Enter description (optional)"
+              rows={2}
+            />
+          </div>
 
-            {validationError && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-                {validationError}
-              </div>
-            )}
+          <div className="space-y-2">
+            <Label htmlFor="valueType">Value Type *</Label>
+            <Select value={valueType} onValueChange={(value) => setValueType(value as ValueType)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="text">Text</SelectItem>
+                <SelectItem value="object">Object</SelectItem>
+                <SelectItem value="array">Array</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-              <h4 className="text-sm font-medium text-blue-900 mb-2">Auto Translation</h4>
-              <p className="text-sm text-blue-700">
-                This English {valueType} will be automatically translated to: {project.languages.filter(lang => lang !== 'en').join(', ')}
-              </p>
-              {valueType !== 'text' && (
-                <p className="text-sm text-blue-600 mt-1">
-                  Only string values within the {valueType} will be translated.
-                </p>
-              )}
+          {renderValueInput()}
+
+          {validationError && (
+            <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-md text-sm">
+              {validationError}
             </div>
+          )}
 
-            <div className="flex justify-end space-x-3 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isLoading || !prop || !categoryId || !getCurrentValue()}
-                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50"
-              >
-                {isLoading ? 'Updating...' : 'Update Key'}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={handleClose}>
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={isLoading || !prop || !categoryId}
+            >
+              <Edit className="mr-2 h-4 w-4" />
+              {isLoading ? 'Updating...' : 'Update Key'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 } 

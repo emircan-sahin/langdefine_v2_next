@@ -1,5 +1,22 @@
 'use client'
 
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { 
+  FolderOpen, 
+  Key, 
+  Plus, 
+  Trash2, 
+  Edit, 
+  ChevronRight,
+  FileText,
+  Code,
+  Database,
+  Eye
+} from 'lucide-react'
+import { useState } from 'react'
+
 interface Category {
   _id: string
   name: string
@@ -28,6 +45,7 @@ interface CategoryListProps {
   onEditKey: (key: TranslationKey) => void
   onDeleteCategory: (categoryId: string) => void
   onDeleteKey: (keyId: string) => void
+  project?: { languages: string[] }
 }
 
 export default function CategoryList({ 
@@ -36,8 +54,25 @@ export default function CategoryList({
   onCreateKey, 
   onEditKey,
   onDeleteCategory, 
-  onDeleteKey 
+  onDeleteKey,
+  project
 }: CategoryListProps) {
+  const allLanguages = project?.languages || []
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(allLanguages)
+  const [valueModal, setValueModal] = useState<{ value: any, language: string, valueType: string } | null>(null)
+  const openValueModal = (valueObj: { value: any, language: string, valueType: string }) => setValueModal(valueObj)
+  const closeValueModal = () => setValueModal(null)
+
+  const toggleLanguage = (lang: string) => {
+    setSelectedLanguages(prev =>
+      prev.includes(lang)
+        ? prev.filter(l => l !== lang)
+        : [...prev, lang]
+    )
+  }
+  const selectAll = () => setSelectedLanguages(allLanguages)
+  const deselectAll = () => setSelectedLanguages([])
+
   const getCategoryKeys = (categoryId: string) => {
     return translationKeys.filter(key => key.categoryId === categoryId)
   }
@@ -64,7 +99,7 @@ export default function CategoryList({
     switch (valueType) {
       case 'text':
         return (
-          <span className="text-sm text-gray-700">
+          <span className="text-sm text-muted-foreground">
             {typeof value === 'string' ? value : JSON.stringify(value)}
           </span>
         )
@@ -73,28 +108,28 @@ export default function CategoryList({
         return (
           <div className="text-sm">
             <div className="flex items-center gap-2 mb-2">
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+              <Badge variant="secondary" className="text-xs">
                 Object
-              </span>
-              <span className="text-gray-500 text-xs">
+              </Badge>
+              <span className="text-muted-foreground text-xs">
                 {typeof value === 'object' && value !== null ? Object.keys(value).length : 0} properties
               </span>
             </div>
             {typeof value === 'object' && value !== null && Object.keys(value).length > 0 ? (
-              <div className="bg-gray-50 rounded p-3 space-y-2">
+              <div className="bg-muted rounded p-3 space-y-2">
                 {Object.entries(value).map(([key, val]) => (
                   <div key={key} className="flex items-center gap-2 text-xs">
-                    <span className="font-medium text-gray-700 min-w-0 flex-1 truncate">
+                    <span className="font-medium text-foreground min-w-0 flex-1 truncate">
                       {key}:
                     </span>
-                    <span className="text-gray-600 flex-1">
+                    <span className="text-muted-foreground flex-1">
                       {typeof val === 'string' ? val : JSON.stringify(val)}
                     </span>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-gray-500 text-xs italic">No properties</div>
+              <div className="text-muted-foreground text-xs italic">No properties</div>
             )}
           </div>
         )
@@ -103,37 +138,35 @@ export default function CategoryList({
         return (
           <div className="text-sm">
             <div className="flex items-center gap-2 mb-2">
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+              <Badge variant="success" className="text-xs">
                 Array
-              </span>
-              <span className="text-gray-500 text-xs">
+              </Badge>
+              <span className="text-muted-foreground text-xs">
                 {Array.isArray(value) ? value.length : 0} items
               </span>
             </div>
             {Array.isArray(value) && value.length > 0 ? (
-              <div className="bg-gray-50 rounded p-3 space-y-2">
+              <div className="bg-muted rounded p-3 space-y-2">
                 {value.map((item, index) => (
-                  <div key={index} className="border-l-2 border-gray-200 pl-3">
+                  <div key={index} className="border-l-2 border-border pl-3">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium text-gray-500 text-xs">
+                      <span className="font-medium text-muted-foreground text-xs">
                         [{index}]:
                       </span>
-                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${
-                        typeof item === 'string' ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'
-                      }`}>
+                      <Badge variant={typeof item === 'string' ? 'default' : 'secondary'} className="text-xs">
                         {typeof item === 'string' ? 'String' : 'Object'}
-                      </span>
+                      </Badge>
                     </div>
                     {typeof item === 'string' ? (
-                      <span className="text-gray-600 text-xs">{item}</span>
+                      <span className="text-muted-foreground text-xs">{item}</span>
                     ) : (
                       <div className="space-y-1">
                         {Object.entries(item).map(([key, val]) => (
                           <div key={key} className="flex items-center gap-2 text-xs">
-                            <span className="font-medium text-gray-600 min-w-0 flex-1 truncate">
+                            <span className="font-medium text-muted-foreground min-w-0 flex-1 truncate">
                               {key}:
                             </span>
-                            <span className="text-gray-500 flex-1">
+                            <span className="text-muted-foreground flex-1">
                               {typeof val === 'string' ? val : JSON.stringify(val)}
                             </span>
                           </div>
@@ -144,14 +177,14 @@ export default function CategoryList({
                 ))}
               </div>
             ) : (
-              <div className="text-gray-500 text-xs italic">No items</div>
+              <div className="text-muted-foreground text-xs italic">No items</div>
             )}
           </div>
         )
       
       default:
         return (
-          <span className="text-sm text-gray-700">
+          <span className="text-sm text-muted-foreground">
             {typeof value === 'string' ? value : JSON.stringify(value)}
           </span>
         )
@@ -164,137 +197,216 @@ export default function CategoryList({
 
     return (
       <div key={category._id} className="mb-6">
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="flex justify-between items-start mb-3">
-            <div>
-              <h3 className="text-lg font-medium text-gray-900" style={{ marginLeft: `${level * 20}px` }}>
-                {category.name}
-              </h3>
-              {category.description && (
-                <p className="text-sm text-gray-600 mt-1">{category.description}</p>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={onCreateKey}
-                className="text-sm text-indigo-600 hover:text-indigo-800"
-              >
-                + Add Key
-              </button>
-              <button
-                onClick={(e) => handleDeleteCategory(e, category._id)}
-                className="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-50 transition-colors"
-                title="Delete category"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          {categoryKeys.length > 0 && (
-            <div className="mt-4">
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Translation Keys</h4>
-              <div className="space-y-3">
-                {categoryKeys.map((key) => (
-                  <div key={key._id} className="bg-gray-50 rounded p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h5 className="font-medium text-gray-900">{key.title}</h5>
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            key.valueType === 'text' ? 'bg-blue-100 text-blue-800' :
-                            key.valueType === 'object' ? 'bg-purple-100 text-purple-800' :
-                            'bg-green-100 text-green-800'
-                          }`}>
-                            {key.valueType.charAt(0).toUpperCase() + key.valueType.slice(1)}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-600">{key.key}</p>
-                        {key.description && (
-                          <p className="text-xs text-gray-500 mt-1">{key.description}</p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500">
-                          {key.values.length} translation{key.values.length !== 1 ? 's' : ''}
-                        </span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            onEditKey(key)
-                          }}
-                          className="text-indigo-600 hover:text-indigo-800 p-1 rounded-full hover:bg-indigo-50 transition-colors"
-                          title="Edit translation key"
-                        >
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={(e) => handleDeleteKey(e, key._id)}
-                          className="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-50 transition-colors"
-                          title="Delete translation key"
-                        >
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      {key.values.map((value, index) => (
-                        <div key={index} className="border-l-2 border-gray-200 pl-3">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-xs font-medium text-gray-700">
-                              {value.language.toUpperCase()}:
-                            </span>
-                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${
-                              value.valueType === 'text' ? 'bg-blue-50 text-blue-700' :
-                              value.valueType === 'object' ? 'bg-purple-50 text-purple-700' :
-                              'bg-green-50 text-green-700'
-                            }`}>
-                              {value.valueType}
-                            </span>
-                          </div>
-                          {renderValuePreview(value.value, value.valueType)}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+        <Card className="hover-lift">
+          <CardHeader>
+            <div className="flex justify-between items-start">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <FolderOpen className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg" style={{ marginLeft: `${level * 20}px` }}>
+                    {category.name}
+                  </CardTitle>
+                  {category.description && (
+                    <CardDescription className="mt-1">{category.description}</CardDescription>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onCreateKey}
+                  className="text-primary hover:text-primary"
+                >
+                  <Plus className="mr-1 h-4 w-4" />
+                  Add Key
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => handleDeleteCategory(e, category._id)}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             </div>
+          </CardHeader>
+
+          {/* Supported Languages Filter */}
+          {allLanguages.length > 0 && (
+            <CardContent>
+              <div className="flex flex-wrap gap-2 mb-2 items-center">
+                <span className="text-xs text-muted-foreground mr-2">Filter languages:</span>
+                {allLanguages.map(lang => (
+                  <button
+                    key={lang}
+                    type="button"
+                    className={`px-2 py-1 rounded text-xs border font-medium transition
+                      ${selectedLanguages.includes(lang)
+                        ? 'bg-primary text-primary-foreground border-primary shadow'
+                        : 'bg-background/80 text-muted-foreground border-border hover:bg-muted/70'}
+                    `}
+                    onClick={() => toggleLanguage(lang)}
+                  >
+                    {lang}
+                  </button>
+                ))}
+                <button type="button" className="ml-2 text-xs underline" onClick={selectAll}>Hepsini seç</button>
+                <button type="button" className="ml-1 text-xs underline" onClick={deselectAll}>Temizle</button>
+              </div>
+            </CardContent>
+          )}
+
+          {categoryKeys.length > 0 && (
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {categoryKeys.map((key) => (
+                  <Card key={key._id} className="bg-muted/50">
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex items-center space-x-2">
+                          <Key className="h-4 w-4 text-primary" />
+                          <div>
+                            <h4 className="font-semibold text-foreground mb-1">{key.title}</h4>
+                            {key.description && (
+                              <p className="text-xs text-muted-foreground mb-1 line-clamp-2" title={key.description}>{key.description}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onEditKey(key)}
+                            className="text-primary hover:text-primary"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => handleDeleteKey(e, key._id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {key.values.filter(value => selectedLanguages.includes(value.language)).map((value, index) => (
+                          <div key={index} className="rounded bg-background border px-2 py-1 flex flex-col min-w-[90px] max-w-[180px] relative group">
+                            <div className="flex items-center gap-1 mb-1">
+                              <Badge variant="outline" className="text-xs px-1 py-0.5">
+                                {value.language}
+                              </Badge>
+                              <Badge variant="secondary" className="text-xs px-1 py-0.5">
+                                {value.valueType}
+                              </Badge>
+                              <button
+                                className="ml-auto opacity-60 hover:opacity-100"
+                                onClick={() => openValueModal(value)}
+                                title="Detayı gör"
+                                type="button"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                            </div>
+                            <span
+                              className="text-xs text-muted-foreground truncate cursor-help"
+                              title={typeof value.value === 'string' ? value.value : JSON.stringify(value.value)}
+                            >
+                              {typeof value.value === 'string'
+                                ? value.value.slice(0, 40)
+                                : Array.isArray(value.value)
+                                  ? `${value.value.length} item`
+                                  : typeof value.value === 'object'
+                                    ? `${Object.keys(value.value).length} property`
+                                    : JSON.stringify(value.value).slice(0, 40)
+                              }
+                              {((typeof value.value === 'string' ? value.value : JSON.stringify(value.value)).length > 40) && '...'}
+                            </span>
+                            {/* Tooltip ile tamamı */}
+                            <div className="hidden group-hover:block absolute z-10 left-0 top-full mt-1 w-max max-w-xs bg-background border p-2 rounded shadow text-xs">
+                              {typeof value.value === 'string'
+                                ? value.value
+                                : <pre className="whitespace-pre-wrap">{JSON.stringify(value.value, null, 2)}</pre>
+                              }
+                            </div>
+                          </div>
+                        ))}
+                        {key.values.filter(value => selectedLanguages.includes(value.language)).length === 0 && (
+                          <span className="text-xs text-muted-foreground italic">Seçili dillerde değer yok</span>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
           )}
 
           {childCategories.length > 0 && (
-            <div className="mt-4">
-              {childCategories.map(childCategory => renderCategory(childCategory, level + 1))}
-            </div>
+            <CardContent>
+              <div className="space-y-4">
+                {childCategories.map((childCategory) => renderCategory(childCategory, level + 1))}
+              </div>
+            </CardContent>
           )}
-        </div>
+        </Card>
       </div>
     )
   }
 
   const rootCategories = getChildCategories(null)
 
-  if (categories.length === 0) {
+  if (rootCategories.length === 0) {
     return (
-      <div className="text-center py-8">
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No categories yet</h3>
-        <p className="text-gray-500 mb-4">
-          Create your first category to start organizing translation keys.
-        </p>
-      </div>
+      <Card>
+        <CardContent className="pt-6">
+          <div className="text-center py-12">
+            <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground" />
+            <h3 className="mt-2 text-sm font-medium text-foreground">No categories yet</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Create your first category to organize your translation keys.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     )
   }
 
   return (
-    <div className="space-y-4">
-      {rootCategories.map(category => renderCategory(category))}
+    <div className="space-y-6">
+      {rootCategories.map((category) => renderCategory(category))}
+        {/* Value Modal */}
+        {valueModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+            <div className="bg-background border rounded-lg shadow-lg p-6 max-w-lg w-full relative">
+              <button
+                className="absolute top-2 right-2 text-muted-foreground hover:text-foreground"
+                onClick={closeValueModal}
+                title="Kapat"
+                type="button"
+              >
+                ✕
+              </button>
+              <div className="mb-2 flex items-center gap-2">
+                <Badge variant="outline" className="text-xs px-1 py-0.5">{valueModal.language}</Badge>
+                <Badge variant="secondary" className="text-xs px-1 py-0.5">{valueModal.valueType}</Badge>
+              </div>
+              <div className="overflow-auto max-h-96">
+                {typeof valueModal.value === 'string'
+                  ? <span className="text-sm">{valueModal.value}</span>
+                  : <pre className="whitespace-pre-wrap text-xs">{JSON.stringify(valueModal.value, null, 2)}</pre>
+                }
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   )
 } 

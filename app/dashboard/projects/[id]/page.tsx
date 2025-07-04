@@ -3,11 +3,26 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useAuthStore } from '../../../store/auth'
+import { DashboardLayout } from '../../../components/ui/dashboard-layout'
+import { PageHeader } from '../../../components/ui/page-header'
+import { Button } from '../../../components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card'
+import { useToast } from '../../../components/ui/use-toast'
 import CreateCategoryModal from '../../../components/dashboard/CreateCategoryModal'
 import CreateTranslationKeyModal from '../../../components/dashboard/CreateTranslationKeyModal'
 import UpdateTranslationKeyModal from '../../../components/dashboard/UpdateTranslationKeyModal'
 import ExportModal from '../../../components/dashboard/ExportModal'
 import CategoryList from '../../../components/dashboard/CategoryList'
+import { 
+  ArrowLeft, 
+  FolderPlus, 
+  Key, 
+  Download, 
+  BookOpen,
+  Globe,
+  Languages
+} from 'lucide-react'
+import { Badge } from '../../../components/ui/badge'
 
 interface Project {
   _id: string
@@ -53,10 +68,10 @@ export default function ProjectDetailPage() {
   const router = useRouter()
   const params = useParams()
   const { token, isAuthenticated, isLoading: authLoading, logout } = useAuthStore()
+  const { toast } = useToast()
   const projectId = params.id as string
 
   useEffect(() => {
-    // Wait for auth store to finish loading before checking authentication
     if (authLoading) return
 
     if (!isAuthenticated) {
@@ -108,6 +123,11 @@ export default function ProjectDetailPage() {
       setTranslationKeys(keysData.keys)
     } catch (err) {
       setError('Failed to load project data')
+      toast({
+        title: 'Error',
+        description: 'Failed to load project data',
+        variant: 'destructive',
+      })
     } finally {
       setIsLoading(false)
     }
@@ -137,8 +157,17 @@ export default function ProjectDetailPage() {
 
       await fetchProjectData()
       setShowCreateCategory(false)
+      toast({
+        title: 'Success',
+        description: 'Category created successfully',
+        variant: 'success',
+      })
     } catch (err) {
-      setError('Failed to create category')
+      toast({
+        title: 'Error',
+        description: 'Failed to create category',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -168,8 +197,17 @@ export default function ProjectDetailPage() {
 
       await fetchProjectData()
       setShowCreateKey(false)
+      toast({
+        title: 'Success',
+        description: 'Translation key created successfully',
+        variant: 'success',
+      })
     } catch (err) {
-      setError('Failed to create translation key')
+      toast({
+        title: 'Error',
+        description: 'Failed to create translation key',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -187,8 +225,17 @@ export default function ProjectDetailPage() {
       }
 
       await fetchProjectData()
+      toast({
+        title: 'Success',
+        description: 'Category deleted successfully',
+        variant: 'success',
+      })
     } catch (err) {
-      setError('Failed to delete category')
+      toast({
+        title: 'Error',
+        description: 'Failed to delete category',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -206,8 +253,17 @@ export default function ProjectDetailPage() {
       }
 
       await fetchProjectData()
+      toast({
+        title: 'Success',
+        description: 'Translation key deleted successfully',
+        variant: 'success',
+      })
     } catch (err) {
-      setError('Failed to delete translation key')
+      toast({
+        title: 'Error',
+        description: 'Failed to delete translation key',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -239,8 +295,17 @@ export default function ProjectDetailPage() {
       await fetchProjectData()
       setShowUpdateKey(false)
       setSelectedKey(null)
+      toast({
+        title: 'Success',
+        description: 'Translation key updated successfully',
+        variant: 'success',
+      })
     } catch (err) {
-      setError('Failed to update translation key')
+      toast({
+        title: 'Error',
+        description: 'Failed to update translation key',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -249,141 +314,190 @@ export default function ProjectDetailPage() {
     setShowUpdateKey(true)
   }
 
-  // Show loading state while auth is loading
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
         </div>
       </div>
     )
   }
 
-  // Don't render anything if not authenticated (will redirect)
   if (!isAuthenticated) {
     return null
   }
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-500">Loading project...</p>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Loading project...</p>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Error</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
-          >
-            Back to Dashboard
-          </button>
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <h2 className="text-xl font-semibold text-foreground mb-2">Error</h2>
+              <p className="text-muted-foreground mb-4">{error}</p>
+              <Button onClick={() => router.push('/dashboard')}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Dashboard
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     )
   }
 
   if (!project) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-500">Project not found</p>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Project not found</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="text-sm text-gray-500 hover:text-gray-700 mr-4"
-              >
-                ← Back to Dashboard
-              </button>
-              <h1 className="text-xl font-semibold text-gray-900">{project.name}</h1>
-            </div>
-          </div>
+    <DashboardLayout>
+      <PageHeader
+        title={project.name}
+        description={project.description}
+      >
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" onClick={() => router.push('/dashboard')}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Dashboard
+          </Button>
+          <Button onClick={() => setShowCreateCategory(true)}>
+            <FolderPlus className="mr-2 h-4 w-4" />
+            Create Category
+          </Button>
+          <Button variant="success" onClick={() => setShowCreateKey(true)}>
+            <Key className="mr-2 h-4 w-4" />
+            Add Key
+          </Button>
+          <Button variant="secondary" onClick={() => setShowExportModal(true)}>
+            <Download className="mr-2 h-4 w-4" />
+            Export
+          </Button>
+          <Button variant="outline" onClick={() => router.push('/documentation')}>
+            <BookOpen className="mr-2 h-4 w-4" />
+            Documentation
+          </Button>
         </div>
-      </nav>
+      </PageHeader>
 
-      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Categories</h2>
-              {project.description && (
-                <p className="text-gray-600 mt-1">{project.description}</p>
-              )}
+      {/* Project Stats */}
+      <div className="grid gap-4 md:grid-cols-3 mb-8">
+        <Card className="hover-lift">
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Globe className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Languages</p>
+                <p className="text-2xl font-bold gradient-text">{project.languages.length}</p>
+              </div>
             </div>
-            <div className="flex space-x-3">
-              <button
-                onClick={() => setShowCreateCategory(true)}
-                className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
-              >
-                Create Category
-              </button>
-              <button
-                onClick={() => setShowCreateKey(true)}
-                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
-              >
-                Add Key
-              </button>
-              <button
-                onClick={() => setShowExportModal(true)}
-                className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
-              >
-                Export
-              </button>
-              <button
-                onClick={() => router.push('/documentation')}
-                className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
-              >
-                Documentation
-              </button>
-            </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          <CategoryList
-            categories={categories}
-            translationKeys={translationKeys}
-            onCreateKey={() => setShowCreateKey(true)}
-            onEditKey={handleEditKey}
-            onDeleteCategory={handleDeleteCategory}
-            onDeleteKey={handleDeleteKey}
-          />
-        </div>
+        <Card className="hover-lift">
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <FolderPlus className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Categories</p>
+                <p className="text-2xl font-bold gradient-text">{categories.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="hover-lift">
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Key className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Translation Keys</p>
+                <p className="text-2xl font-bold gradient-text">{translationKeys.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {showCreateCategory && (
-        <CreateCategoryModal
-          onClose={() => setShowCreateCategory(false)}
-          onSubmit={handleCreateCategory}
-          categories={categories}
-        />
-      )}
+      {/* Languages */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Languages className="mr-2 h-5 w-5" />
+            Supported Languages
+          </CardTitle>
+          <CardDescription>
+            Languages configured for this project
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            {project.languages.map((language) => (
+              <Badge 
+                key={language} 
+                variant={language === project.mainLanguage ? 'default' : 'secondary'}
+                className="text-sm"
+              >
+                {language}
+                {language === project.mainLanguage && (
+                  <span className="ml-1 text-xs">(Main)</span>
+                )}
+              </Badge>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
-      {showCreateKey && (
-        <CreateTranslationKeyModal
-          onClose={() => setShowCreateKey(false)}
-          onSubmit={handleCreateTranslationKey}
-          categories={categories}
-          project={project}
-        />
-      )}
+      {/* Categories and Keys */}
+      <CategoryList
+        categories={categories}
+        translationKeys={translationKeys}
+        onCreateKey={() => setShowCreateKey(true)}
+        onEditKey={handleEditKey}
+        onDeleteCategory={handleDeleteCategory}
+        onDeleteKey={handleDeleteKey}
+        project={project}
+      />
 
-      {showUpdateKey && selectedKey && (
+      {/* Modals */}
+      <CreateCategoryModal
+        isOpen={showCreateCategory}
+        onClose={() => setShowCreateCategory(false)}
+        onSubmit={handleCreateCategory}
+        categories={categories}
+      />
+
+      <CreateTranslationKeyModal
+        isOpen={showCreateKey}
+        onClose={() => setShowCreateKey(false)}
+        onSubmit={handleCreateTranslationKey}
+        categories={categories}
+        project={project}
+      />
+
+      {selectedKey && (
         <UpdateTranslationKeyModal
+          isOpen={showUpdateKey}
           onClose={() => {
             setShowUpdateKey(false)
             setSelectedKey(null)
@@ -395,7 +509,7 @@ export default function ProjectDetailPage() {
         />
       )}
 
-      {showExportModal && project && (
+      {project && (
         <ExportModal
           isOpen={showExportModal}
           onClose={() => setShowExportModal(false)}
@@ -404,6 +518,6 @@ export default function ProjectDetailPage() {
           languages={project.languages}
         />
       )}
-    </div>
+    </DashboardLayout>
   )
 } 

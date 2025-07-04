@@ -3,6 +3,22 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '../store/auth'
+import { DashboardLayout } from '../components/ui/dashboard-layout'
+import { PageHeader } from '../components/ui/page-header'
+import { Button } from '../components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
+import { Badge } from '../components/ui/badge'
+import { 
+  BookOpen, 
+  Code, 
+  FileText, 
+  Globe, 
+  ArrowRight,
+  CheckCircle,
+  Lightbulb,
+  Terminal,
+  Zap
+} from 'lucide-react'
 
 export default function DocumentationPage() {
   const [activeTab, setActiveTab] = useState('react')
@@ -11,10 +27,10 @@ export default function DocumentationPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
         </div>
       </div>
     )
@@ -26,16 +42,17 @@ export default function DocumentationPage() {
   }
 
   const tabs = [
-    { id: 'react', name: 'React', icon: '⚛️' },
-    { id: 'express', name: 'Express.js', icon: '🚀' },
-    { id: 'node', name: 'Node.js', icon: '🟢' },
-    { id: 'remix', name: 'Remix', icon: '⚡' }
+    { id: 'react', name: 'React', icon: '⚛️', description: 'React applications' },
+    { id: 'express', name: 'Express.js', icon: '🚀', description: 'Node.js web servers' },
+    { id: 'node', name: 'Node.js', icon: '🟢', description: 'Server-side applications' },
+    { id: 'remix', name: 'Remix', icon: '⚡', description: 'Full-stack framework' }
   ]
 
   const frameworks = {
     react: {
       title: 'React Integration',
-      description: 'Learn how to integrate translations into your React application',
+      description: 'Learn how to integrate translations into your React application with react-i18next',
+      icon: '⚛️',
       steps: [
         {
           title: '1. Install i18n library',
@@ -97,6 +114,7 @@ function MyComponent() {
     express: {
       title: 'Express.js Integration',
       description: 'Learn how to integrate translations into your Express.js application',
+      icon: '🚀',
       steps: [
         {
           title: '1. Install i18n library',
@@ -148,6 +166,7 @@ app.use(middleware.handle(i18next))`,
     node: {
       title: 'Node.js Integration',
       description: 'Learn how to integrate translations into your Node.js application',
+      icon: '🟢',
       steps: [
         {
           title: '1. Import your translations',
@@ -200,6 +219,7 @@ app.get('/api/messages', (req, res) => {
     remix: {
       title: 'Remix Integration',
       description: 'Learn how to integrate translations into your Remix application',
+      icon: '⚡',
       steps: [
         {
           title: '1. Install i18n library',
@@ -280,102 +300,158 @@ export default function Index() {
   const currentFramework = frameworks[activeTab as keyof typeof frameworks]
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-semibold text-gray-900">LangDefine</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="text-sm text-gray-500 hover:text-gray-700"
-              >
-                Dashboard
-              </button>
-            </div>
-          </div>
+    <DashboardLayout>
+      <PageHeader
+        title="Documentation"
+        description="Learn how to integrate your exported translations into different frameworks and applications."
+      >
+        <Button variant="outline" onClick={() => router.push('/dashboard')}>
+          <ArrowRight className="mr-2 h-4 w-4" />
+          Back to Dashboard
+        </Button>
+      </PageHeader>
+
+      {/* Framework Tabs */}
+      <div className="mb-8">
+        <div className="flex flex-wrap gap-2">
+          {tabs.map((tab) => (
+            <Button
+              key={tab.id}
+              variant={activeTab === tab.id ? 'default' : 'outline'}
+              onClick={() => setActiveTab(tab.id)}
+              className="flex items-center space-x-2"
+            >
+              <span className="text-lg">{tab.icon}</span>
+              <span>{tab.name}</span>
+            </Button>
+          ))}
         </div>
-      </nav>
+      </div>
 
-      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              Integration Documentation
-            </h1>
-            <p className="text-lg text-gray-600">
-              Learn how to integrate your exported translations into different frameworks and applications.
-            </p>
-          </div>
-
-          {/* Framework Tabs */}
-          <div className="border-b border-gray-200 mb-8">
-            <nav className="-mb-px flex space-x-8">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === tab.id
-                      ? 'border-indigo-500 text-indigo-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <span className="mr-2">{tab.icon}</span>
-                  {tab.name}
-                </button>
-              ))}
-            </nav>
-          </div>
-
-          {/* Framework Content */}
-          <div className="bg-white shadow rounded-lg">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">
-                {currentFramework.title}
-              </h2>
-              <p className="text-gray-600 mt-1">
-                {currentFramework.description}
-              </p>
+      {/* Framework Content */}
+      <Card className="hover-lift">
+        <CardHeader>
+          <div className="flex items-center space-x-3">
+            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+              <span className="text-2xl">{currentFramework.icon}</span>
             </div>
+            <div>
+              <CardTitle className="text-2xl">{currentFramework.title}</CardTitle>
+              <CardDescription className="text-base">
+                {currentFramework.description}
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
 
-            <div className="p-6">
-              <div className="space-y-8">
-                {currentFramework.steps.map((step, index) => (
-                  <div key={index} className="border-l-4 border-indigo-500 pl-4">
-                    <h3 className="text-lg font-medium text-gray-900 mb-3">
+        <CardContent className="space-y-8">
+          {/* Steps */}
+          <div className="space-y-6">
+            {currentFramework.steps.map((step, index) => (
+              <div key={index} className="relative">
+                <div className="flex items-start space-x-4">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-sm font-semibold text-primary">{index + 1}</span>
+                  </div>
+                  <div className="flex-1 space-y-3">
+                    <h3 className="text-lg font-semibold text-foreground">
                       {step.title}
                     </h3>
-                    <div className="bg-gray-900 rounded-lg p-4 overflow-x-auto">
-                      <pre className="text-sm text-gray-100">
-                        <code className={`language-${step.language}`}>
+                    <div className="bg-muted rounded-lg p-4 overflow-x-auto border">
+                      <pre className="text-sm">
+                        <code className={`language-${step.language} text-foreground`}>
                           {step.code}
                         </code>
                       </pre>
                     </div>
                   </div>
-                ))}
+                </div>
               </div>
-
-              {/* Additional Tips */}
-              <div className="mt-8 p-4 bg-blue-50 rounded-lg">
-                <h4 className="text-sm font-medium text-blue-900 mb-2">
-                  💡 Pro Tips
-                </h4>
-                <ul className="text-sm text-blue-800 space-y-1">
-                  <li>• Always provide fallback translations for missing keys</li>
-                  <li>• Use nested keys for better organization (e.g., "common.buttons.save")</li>
-                  <li>• Consider using TypeScript for better type safety</li>
-                  <li>• Implement locale detection based on user preferences</li>
-                  <li>• Cache translations for better performance</li>
-                </ul>
-              </div>
-            </div>
+            ))}
           </div>
-        </div>
-      </div>
-    </div>
+
+          {/* Pro Tips */}
+          <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+            <CardHeader>
+              <div className="flex items-center space-x-2">
+                <Lightbulb className="h-5 w-5 text-warning" />
+                <CardTitle className="text-lg">Pro Tips</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span className="text-sm">Always provide fallback translations</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span className="text-sm">Use nested keys for organization</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span className="text-sm">Consider TypeScript for type safety</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span className="text-sm">Implement locale detection</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span className="text-sm">Cache translations for performance</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span className="text-sm">Use consistent naming conventions</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Quick Actions */}
+          <div className="grid md:grid-cols-3 gap-4">
+            <Card className="hover-lift cursor-pointer" onClick={() => router.push('/dashboard')}>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-3">
+                  <Globe className="h-5 w-5 text-primary" />
+                  <div>
+                    <h4 className="font-semibold">Create Project</h4>
+                    <p className="text-sm text-muted-foreground">Start a new translation project</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover-lift cursor-pointer">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-3">
+                  <Code className="h-5 w-5 text-primary" />
+                  <div>
+                    <h4 className="font-semibold">API Reference</h4>
+                    <p className="text-sm text-muted-foreground">View API documentation</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover-lift cursor-pointer">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-3">
+                  <Zap className="h-5 w-5 text-primary" />
+                  <div>
+                    <h4 className="font-semibold">Examples</h4>
+                    <p className="text-sm text-muted-foreground">Browse code examples</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </CardContent>
+      </Card>
+    </DashboardLayout>
   )
 } 
