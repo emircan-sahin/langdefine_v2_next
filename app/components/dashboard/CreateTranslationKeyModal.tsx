@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { Key, Plus, Trash2 } from 'lucide-react'
+import { Key, Plus, Trash2, Upload, FileText, AlertCircle, Bot } from 'lucide-react'
 
 interface Category {
   _id: string
@@ -36,6 +36,14 @@ interface ArrayItem {
   value: string | KeyValuePair[]
 }
 
+interface ExtractedKey {
+  key: string
+  value: string
+  description?: string
+  lineNumber: number
+  confidence: number
+}
+
 interface CreateTranslationKeyModalProps {
   isOpen: boolean
   onClose: () => void
@@ -58,8 +66,14 @@ export default function CreateTranslationKeyModal({ isOpen, onClose, onSubmit, c
   const [objectPairs, setObjectPairs] = useState<KeyValuePair[]>([{ key: '', value: '' }])
   const [arrayItems, setArrayItems] = useState<ArrayItem[]>([{ type: 'string', value: '' }])
   const [categoryId, setCategoryId] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
   const [validationError, setValidationError] = useState('')
+  
+  // File upload and AI analysis states
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  const [extractedKeys, setExtractedKeys] = useState<ExtractedKey[]>([])
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [analysisError, setAnalysisError] = useState('')
+  const [showFileUpload, setShowFileUpload] = useState(false)
 
   const getCurrentValue = () => {
     switch (valueType) {
@@ -138,37 +152,7 @@ export default function CreateTranslationKeyModal({ isOpen, onClose, onSubmit, c
     return true
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!validateValue()) {
-      return
-    }
-
-    setIsLoading(true)
-
-    try {
-      await onSubmit({
-        prop,
-        description: description || undefined,
-        value: getCurrentValue(),
-        valueType,
-        categoryId,
-      })
-      // Reset form
-      setProp('')
-      setDescription('')
-      setTextValue('')
-      setObjectPairs([{ key: '', value: '' }])
-      setArrayItems([{ type: 'string', value: '' }])
-      setCategoryId('')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleClose = () => {
-    // Reset form when closing
+  const resetForm = () => {
     setProp('')
     setDescription('')
     setTextValue('')
@@ -176,6 +160,41 @@ export default function CreateTranslationKeyModal({ isOpen, onClose, onSubmit, c
     setArrayItems([{ type: 'string', value: '' }])
     setCategoryId('')
     setValidationError('')
+    setUploadedFile(null)
+    setExtractedKeys([])
+    setIsAnalyzing(false)
+    setAnalysisError('')
+    setShowFileUpload(false)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!validateValue()) {
+      return
+    }
+
+    // Clear form immediately
+    const formData = {
+      prop,
+      description: description || undefined,
+      value: getCurrentValue(),
+      valueType,
+      categoryId,
+    }
+    
+    resetForm()
+
+    try {
+      await onSubmit(formData)
+    } catch (error) {
+      // If there's an error, we don't need to do anything here
+      // The parent component will handle the error toast
+    }
+  }
+
+  const handleClose = () => {
+    resetForm()
     onClose()
   }
 
@@ -218,6 +237,97 @@ export default function CreateTranslationKeyModal({ isOpen, onClose, onSubmit, c
       value: type === 'string' ? '' : [{ key: '', value: '' }]
     }
     setArrayItems(newItems)
+  }
+
+  // AI-powered file analysis using functions & tools
+  const analyzeFileWithAI = async (file: File): Promise<ExtractedKey[]> => {
+    const fileContent = await file.text()
+    
+    try {
+      const response = await fetch('/api/analyze-translations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fileContent,
+          fileName: file.name,
+          projectLanguages: project.languages,
+          mainLanguage: project.mainLanguage
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to analyze file')
+      }
+
+      const data = await response.json()
+      return data.keys || []
+    } catch (error) {
+      console.error('AI analysis failed:', error)
+      throw new Error('Failed to analyze file with AI')
+    }
+  }
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // Check file type - now includes HTML files
+    const allowedExtensions = ['.js', '.jsx', '.ts', '.tsx', '.html', '.htm']
+    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'))
+    
+    if (!allowedExtensions.includes(fileExtension)) {
+      setAnalysisError('Please upload a supported file type (.js, .jsx, .ts, .tsx, .html, .htm)')
+      return
+    }
+
+    setUploadedFile(file)
+    setIsAnalyzing(true)
+    setAnalysisError('')
+
+    try {
+      const keys = await analyzeFileWithAI(file)
+      setExtractedKeys(keys)
+      
+      if (keys.length === 0) {
+        setAnalysisError('No translation keys found in the file. The AI analysis didn\'t detect any translatable content.')
+      }
+    } catch (error) {
+      setAnalysisError('Failed to analyze the file. Please check if it\'s a valid React file.')
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }
+
+  const selectExtractedKey = (extractedKey: ExtractedKey) => {
+    setProp(extractedKey.key)
+    setTextValue(extractedKey.value)
+    setDescription(extractedKey.description || '')
+    setValueType('text')
+  }
+
+  const generateKeysFromFile = async () => {
+    if (extractedKeys.length === 0) return
+
+    for (const key of extractedKeys) {
+      try {
+        await onSubmit({
+          prop: key.key,
+          description: key.description,
+          value: key.value,
+          valueType: 'text' as ValueType,
+          categoryId: categoryId || categories[0]?._id || '',
+        })
+      } catch (error) {
+        console.error(`Failed to create key: ${key.key}`, error)
+      }
+    }
+
+    // Clear the form after generating all keys
+    resetForm()
+    onClose()
   }
 
   const renderValueInput = () => {
@@ -419,18 +529,133 @@ export default function CreateTranslationKeyModal({ isOpen, onClose, onSubmit, c
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center">
             <Key className="mr-2 h-5 w-5" />
             Create Translation Key
           </DialogTitle>
           <DialogDescription>
-            Create a new translation key for your project
+            Create a new translation key for your project or upload a React file for AI-powered analysis
           </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* File Upload Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label className="text-base font-medium">AI-Powered File Analysis</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowFileUpload(!showFileUpload)}
+              >
+                {showFileUpload ? 'Hide' : 'Show'} File Upload
+              </Button>
+            </div>
+            
+            {showFileUpload && (
+              <div className="border border-border rounded-lg p-4 space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="fileUpload" className="flex items-center">
+                    <Upload className="mr-2 h-4 w-4" />
+                    Upload React File for AI Analysis
+                  </Label>
+                  <Input
+                    id="fileUpload"
+                    type="file"
+                    accept=".js,.jsx,.ts,.tsx,.html,.htm"
+                    onChange={handleFileUpload}
+                    className="cursor-pointer"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Upload a file (.js, .jsx, .ts, .tsx, .html, .htm) and AI will automatically extract translation keys
+                  </p>
+                </div>
+
+                {isAnalyzing && (
+                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                    <span>AI is analyzing your file...</span>
+                  </div>
+                )}
+
+                {uploadedFile && !isAnalyzing && (
+                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                    <FileText className="h-4 w-4" />
+                    <span>{uploadedFile.name}</span>
+                  </div>
+                )}
+
+                {analysisError && (
+                  <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-md text-sm flex items-start space-x-2">
+                    <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <span>{analysisError}</span>
+                  </div>
+                )}
+
+                {extractedKeys.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium">
+                        <Bot className="mr-2 h-4 w-4 inline" />
+                        AI Extracted Keys ({extractedKeys.length})
+                      </Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={generateKeysFromFile}
+                        disabled={!categoryId}
+                      >
+                        Generate All Keys
+                      </Button>
+                    </div>
+                    
+                    <div className="max-h-40 overflow-y-auto space-y-2">
+                      {extractedKeys.map((key, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-2 border border-border rounded-md hover:bg-muted/50 cursor-pointer"
+                          onClick={() => selectExtractedKey(key)}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-2">
+                              <span className="font-medium text-sm">{key.key}</span>
+                              <span className="text-xs text-muted-foreground">
+                                (Line {key.lineNumber})
+                              </span>
+                              {key.confidence && (
+                                <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                                  {Math.round(key.confidence * 100)}%
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {key.value}
+                            </p>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              selectExtractedKey(key)
+                            }}
+                          >
+                            Use
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="prop">Key Name *</Label>
@@ -499,10 +724,10 @@ export default function CreateTranslationKeyModal({ isOpen, onClose, onSubmit, c
             </Button>
             <Button 
               type="submit" 
-              disabled={isLoading || !prop || !categoryId}
+              disabled={!prop || !categoryId}
             >
               <Key className="mr-2 h-4 w-4" />
-              {isLoading ? 'Creating...' : 'Create Key'}
+              Create Key
             </Button>
           </DialogFooter>
         </form>

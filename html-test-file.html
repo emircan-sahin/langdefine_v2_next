@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-commerce Website</title>
+    <meta name="description" content="Find the best products at great prices">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="main-header">
+        <nav class="navigation">
+            <div class="logo">
+                <h1>Online Shopping Store</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="/" title="Go to homepage">Home</a></li>
+                <li><a href="/products" title="Browse all products">Products</a></li>
+                <li><a href="/categories" title="Shop by category">Categories</a></li>
+                <li><a href="/about" title="Learn about us">About Us</a></li>
+                <li><a href="/contact" title="Get in touch">Contact</a></li>
+            </ul>
+            <div class="search-section">
+                <input type="text" placeholder="Search for products..." aria-label="Search products">
+                <button type="submit" aria-label="Search">Search</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-content">
+        <section class="hero-section">
+            <h2>Welcome to Our Store</h2>
+            <p>Find the best products at great prices with fast shipping and excellent customer service.</p>
+            <button class="cta-button">Shop Now</button>
+        </section>
+
+        <section class="featured-products">
+            <h3>Featured Products</h3>
+            <div class="product-grid">
+                <article class="product-card">
+                    <img src="product1.jpg" alt="Wireless Headphones" title="High-quality wireless headphones">
+                    <h4>Wireless Headphones</h4>
+                    <p>Premium sound quality with noise cancellation</p>
+                    <div class="product-price">
+                        <span class="price-label">Price:</span>
+                        <span class="price-value">$99.99</span>
+                    </div>
+                    <button class="add-to-cart-button" aria-label="Add Wireless Headphones to cart">
+                        Add to Cart
+                    </button>
+                </article>
+
+                <article class="product-card">
+                    <img src="product2.jpg" alt="Smartphone Case" title="Durable smartphone case">
+                    <h4>Smartphone Case</h4>
+                    <p>Protective case for your smartphone</p>
+                    <div class="product-price">
+                        <span class="price-label">Price:</span>
+                        <span class="price-value">$19.99</span>
+                    </div>
+                    <button class="add-to-cart-button" aria-label="Add Smartphone Case to cart">
+                        Add to Cart
+                    </button>
+                </article>
+
+                <article class="product-card">
+                    <img src="product3.jpg" alt="Laptop Stand" title="Adjustable laptop stand">
+                    <h4>Laptop Stand</h4>
+                    <p>Ergonomic laptop stand for better posture</p>
+                    <div class="product-price">
+                        <span class="price-label">Price:</span>
+                        <span class="price-value">$49.99</span>
+                    </div>
+                    <button class="add-to-cart-button" aria-label="Add Laptop Stand to cart">
+                        Add to Cart
+                    </button>
+                </article>
+            </div>
+        </section>
+
+        <section class="categories-section">
+            <h3>Shop by Category</h3>
+            <div class="category-grid">
+                <div class="category-card">
+                    <h4>Electronics</h4>
+                    <p>Latest gadgets and technology</p>
+                    <a href="/category/electronics" title="Browse electronics">Browse Electronics</a>
+                </div>
+                <div class="category-card">
+                    <h4>Clothing</h4>
+                    <p>Fashion and accessories</p>
+                    <a href="/category/clothing" title="Browse clothing">Browse Clothing</a>
+                </div>
+                <div class="category-card">
+                    <h4>Home & Garden</h4>
+                    <p>Everything for your home</p>
+                    <a href="/category/home" title="Browse home & garden">Browse Home & Garden</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="newsletter-section">
+            <h3>Stay Updated</h3>
+            <p>Subscribe to our newsletter for the latest deals and updates</p>
+            <form class="newsletter-form">
+                <label for="email-input">Email Address</label>
+                <input type="email" id="email-input" placeholder="Enter your email address" required>
+                <button type="submit">Subscribe</button>
+            </form>
+        </section>
+    </main>
+
+    <aside class="shopping-cart">
+        <h3>Shopping Cart</h3>
+        <div class="cart-items">
+            <p class="empty-cart-message">Your cart is empty</p>
+            <p class="start-shopping-message">Start shopping to add items to your cart</p>
+        </div>
+        <div class="cart-actions">
+            <button class="checkout-button" disabled>Checkout</button>
+            <button class="clear-cart-button">Clear Cart</button>
+        </div>
+    </aside>
+
+    <footer class="main-footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Customer Service</h4>
+                <ul>
+                    <li><a href="/contact" title="Contact customer support">Contact Us</a></li>
+                    <li><a href="/help" title="Get help and support">Help Center</a></li>
+                    <li><a href="/returns" title="Return policy information">Returns Policy</a></li>
+                    <li><a href="/shipping" title="Shipping information">Shipping Info</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h4>About Us</h4>
+                <ul>
+                    <li><a href="/about" title="Learn about our company">Company Information</a></li>
+                    <li><a href="/careers" title="Job opportunities">Careers</a></li>
+                    <li><a href="/press" title="Press releases and media">Press Room</a></li>
+                    <li><a href="/blog" title="Company blog">Blog</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h4>Legal</h4>
+                <ul>
+                    <li><a href="/privacy" title="Privacy policy">Privacy Policy</a></li>
+                    <li><a href="/terms" title="Terms of service">Terms of Service</a></li>
+                    <li><a href="/cookies" title="Cookie policy">Cookie Policy</a></li>
+                    <li><a href="/sitemap" title="Site map">Sitemap</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>&copy; 2024 Online Shopping Store. All rights reserved.</p>
+            <div class="social-links">
+                <a href="/facebook" title="Follow us on Facebook" aria-label="Facebook">Facebook</a>
+                <a href="/twitter" title="Follow us on Twitter" aria-label="Twitter">Twitter</a>
+                <a href="/instagram" title="Follow us on Instagram" aria-label="Instagram">Instagram</a>
+            </div>
+        </div>
+    </footer>
+
+    <div class="modal-overlay" id="login-modal" style="display: none;">
+        <div class="modal-content">
+            <h3>Login to Your Account</h3>
+            <form class="login-form">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" placeholder="Enter your email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter your password" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit">Login</button>
+                    <button type="button" class="cancel-button">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="notification" id="success-notification" style="display: none;">
+        <span class="notification-icon">✅</span>
+        <span class="notification-message">Product added to cart successfully!</span>
+    </div>
+
+    <div class="notification error" id="error-notification" style="display: none;">
+        <span class="notification-icon">❌</span>
+        <span class="notification-message">An error occurred. Please try again.</span>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html> 
