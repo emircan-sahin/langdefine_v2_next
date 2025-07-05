@@ -179,6 +179,12 @@ export default function ProjectDetailPage() {
     categoryId: string
   }) => {
     try {
+      // Test toast - toast'un çalışıp çalışmadığını kontrol etmek için
+      toast({
+        title: 'Creating...',
+        description: 'Creating translation key...',
+      })
+
       const response = await fetch('/api/keys', {
         method: 'POST',
         headers: {
@@ -196,7 +202,7 @@ export default function ProjectDetailPage() {
       }
 
       await fetchProjectData()
-      setShowCreateKey(false)
+      // Modal'ı kapatmıyoruz - kullanıcı istediği kadar key oluşturabilsin
       toast({
         title: 'Success',
         description: 'Translation key created successfully',
